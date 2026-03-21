@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package trpc.elysia.access.content_security;
+option go_package="github.com/yzf120/elysia-access/proto/content_security";
+
+// 内容安全审核服务
+service ContentSecurityService {
+  // 文本内容安全审核
+  rpc TextModeration (TextModerationRequest) returns (TextModerationResponse) {}
+  // 图片内容安全审核
+  rpc ImageModeration (ImageModerationRequest) returns (ImageModerationResponse) {}
+}
+
+// ===== 文本审核 =====
+
+// 文本审核请求
+message TextModerationRequest {
+  string content = 1;       // 待审核的文本内容（需要base64编码）
+  string biz_type = 2;      // 业务类型，默认 "default"
+  string user_id = 3;       // 用户ID，用于追踪
+  string data_id = 4;       // 数据ID，用于追踪（如会话ID）
+}
+
+// 文本审核响应
+message TextModerationResponse {
+  int32 code = 1;            // 业务错误码，0 表示成功
+  string message = 2;        // 错误信息
+  string suggestion = 3;     // 建议操作：Pass-通过 Block-违规 Review-疑似
+  string label = 4;          // 恶意标签：Normal-正常 Porn-色情 Abuse-谩骂 Ad-广告 等
+  int32 score = 5;           // 恶意置信度 0-100
+  repeated TextModerationDetail detail_results = 6; // 详细结果
+  string request_id = 7;     // 腾讯云请求ID
+}
+
+// 文本审核详细结果
+message TextModerationDetail {
+  string label = 1;          // 恶意标签
+  string suggestion = 2;     // 建议操作
+  repeated string keywords = 3; // 命中的关键词
+  int32 score = 4;           // 置信度
+}
+
+// ===== 图片审核 =====
+
+// 图片审核请求
+message ImageModerationRequest {
+  string file_url = 1;      // 图片URL（与file_content二选一）
+  bytes file_content = 2;   // 图片内容（base64编码后的bytes）
+  string biz_type = 3;      // 业务类型，默认 "default"
+  string user_id = 4;       // 用户ID
+  string data_id = 5;       // 数据ID
+}
+
+// 图片审核响应
+message ImageModerationResponse {
+  int32 code = 1;            // 业务错误码，0 表示成功
+  string message = 2;        // 错误信息
+  string suggestion = 3;     // 建议操作：Pass-通过 Block-违规 Review-疑似
+  string label = 4;          // 恶意标签
+  int32 score = 5;           // 恶意置信度 0-100
+  string request_id = 6;     // 腾讯云请求ID
+}
